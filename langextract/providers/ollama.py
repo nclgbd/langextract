@@ -157,7 +157,7 @@ class OllamaLanguageModel(inference.BaseLanguageModel):
       system: str = '',
       raw: bool = False,
       model_url: str | None = None,
-      timeout: int = 30,
+      timeout: int = 120,
       keep_alive: int = 5 * 60,
       num_threads: int | None = None,
       num_ctx: int = 2048,
