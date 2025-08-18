@@ -12,20 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# -*- protobuffer -*-
-# proto-file: devtools/kokoro/config/proto/build.proto
-# proto-message: BuildConfig
+"""Provider-specific schema implementations."""
+from __future__ import annotations
 
-# Location of the build script
-build_file: "kokoro/test.sh"
+from langextract.providers.schemas import gemini
 
-# Specify a Docker image that has Python
-container_properties {
-  docker_image: "us-central1-docker.pkg.dev/kokoro-container-bakery/kokoro/ubuntu/ubuntu2204/full:current"
-}
+GeminiSchema = gemini.GeminiSchema  # Backward compat
 
-# Define the structured test results
-xunit_test_results {
-  target_name: "pytest_results"
-  result_xml_path: "git/repo/pytest_results/test.xml"
-}
+__all__ = ["GeminiSchema"]

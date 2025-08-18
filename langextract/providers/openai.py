@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """OpenAI provider for LangExtract."""
-# pylint: disable=cyclic-import,duplicate-code
+# pylint: disable=duplicate-code
 
 from __future__ import annotations
 
@@ -21,20 +21,21 @@ import concurrent.futures
 import dataclasses
 from typing import Any, Iterator, Sequence
 
-from langextract import data
-from langextract import exceptions
-from langextract import inference
-from langextract import schema
-from langextract.providers import registry
+from langextract.core import base_model
+from langextract.core import data
+from langextract.core import exceptions
+from langextract.core import schema
+from langextract.core import types as core_types
+from langextract.providers import patterns
+from langextract.providers import router
 
 
-@registry.register(
-    r'^gpt-4',  # gpt-4.1, gpt-4o, gpt-4-turbo, etc.
-    r'^gpt4\.',  # gpt4.1-mini, gpt4.1-nano, etc.
-    priority=10,
+@router.register(
+    *patterns.OPENAI_PATTERNS,
+    priority=patterns.OPENAI_PRIORITY,
 )
 @dataclasses.dataclass(init=False)
-class OpenAILanguageModel(inference.BaseLanguageModel):
+class OpenAILanguageModel(base_model.BaseLanguageModel):
   """Language model inference using OpenAI's API with structured output."""
 
   model_id: str = 'gpt-4o-mini'
@@ -42,12 +43,19 @@ class OpenAILanguageModel(inference.BaseLanguageModel):
   base_url: str | None = None
   organization: str | None = None
   format_type: data.FormatType = data.FormatType.JSON
-  temperature: float = 0.0
+  temperature: float | None = None
   max_workers: int = 10
   _client: Any = dataclasses.field(default=None, repr=False, compare=False)
   _extra_kwargs: dict[str, Any] = dataclasses.field(
       default_factory=dict, repr=False, compare=False
   )
+
+  @property
+  def requires_fence_output(self) -> bool:
+    """OpenAI JSON mode returns raw JSON without fences."""
+    if self.format_type == data.FormatType.JSON:
+      return False
+    return super().requires_fence_output
 
   def __init__(
       self,
@@ -56,7 +64,7 @@ class OpenAILanguageModel(inference.BaseLanguageModel):
       base_url: str | None = None,
       organization: str | None = None,
       format_type: data.FormatType = data.FormatType.JSON,
-      temperature: float = 0.0,
+      temperature: float | None = None,
       max_workers: int = 10,
       **kwargs,
   ) -> None:
@@ -90,10 +98,9 @@ class OpenAILanguageModel(inference.BaseLanguageModel):
     self.format_type = format_type
     self.temperature = temperature
     self.max_workers = max_workers
-    self._extra_kwargs = kwargs or {}
 
     if not self.api_key:
-      raise exceptions.InferenceConfigError('API key not provided for OpenAI.')
+      raise exceptions.InferenceConfigError('API key not provided.')
 
     # Initialize the OpenAI client
     self._client = openai.OpenAI(
@@ -105,13 +112,13 @@ class OpenAILanguageModel(inference.BaseLanguageModel):
     super().__init__(
         constraint=schema.Constraint(constraint_type=schema.ConstraintType.NONE)
     )
+    self._extra_kwargs = kwargs or {}
 
   def _process_single_prompt(
       self, prompt: str, config: dict
-  ) -> inference.ScoredOutput:
+  ) -> core_types.ScoredOutput:
     """Process a single prompt and return a ScoredOutput."""
     try:
-      # Prepare the system message for structured output
       system_message = ''
       if self.format_type == data.FormatType.JSON:
         system_message = (
@@ -122,22 +129,46 @@ class OpenAILanguageModel(inference.BaseLanguageModel):
             'You are a helpful assistant that responds in YAML format.'
         )
 
-      response = self._client.chat.completions.create(
-          model=self.model_id,
-          messages=[
-              {'role': 'system', 'content': system_message},
-              {'role': 'user', 'content': prompt},
-          ],
-          temperature=config.get('temperature', self.temperature),
-          max_tokens=config.get('max_output_tokens'),
-          top_p=config.get('top_p'),
-          n=1,
-      )
+      messages = [{'role': 'user', 'content': prompt}]
+      if system_message:
+        messages.insert(0, {'role': 'system', 'content': system_message})
+
+      api_params = {
+          'model': self.model_id,
+          'messages': messages,
+          'n': 1,
+      }
+
+      # Only set temperature if explicitly provided
+      temp = config.get('temperature', self.temperature)
+      if temp is not None:
+        api_params['temperature'] = temp
+
+      if self.format_type == data.FormatType.JSON:
+        # Enables structured JSON output for compatible models
+        api_params['response_format'] = {'type': 'json_object'}
+
+      if (v := config.get('max_output_tokens')) is not None:
+        api_params['max_tokens'] = v
+      if (v := config.get('top_p')) is not None:
+        api_params['top_p'] = v
+      for key in [
+          'frequency_penalty',
+          'presence_penalty',
+          'seed',
+          'stop',
+          'logprobs',
+          'top_logprobs',
+      ]:
+        if (v := config.get(key)) is not None:
+          api_params[key] = v
+
+      response = self._client.chat.completions.create(**api_params)
 
       # Extract the response text using the v1.x response format
       output_text = response.choices[0].message.content
 
-      return inference.ScoredOutput(score=1.0, output=output_text)
+      return core_types.ScoredOutput(score=1.0, output=output_text)
 
     except Exception as e:
       raise exceptions.InferenceRuntimeError(
@@ -146,7 +177,7 @@ class OpenAILanguageModel(inference.BaseLanguageModel):
 
   def infer(
       self, batch_prompts: Sequence[str], **kwargs
-  ) -> Iterator[Sequence[inference.ScoredOutput]]:
+  ) -> Iterator[Sequence[core_types.ScoredOutput]]:
     """Runs inference on a list of prompts via OpenAI's API.
 
     Args:
@@ -156,13 +187,30 @@ class OpenAILanguageModel(inference.BaseLanguageModel):
     Yields:
       Lists of ScoredOutputs.
     """
-    config = {
-        'temperature': kwargs.get('temperature', self.temperature),
-    }
-    if 'max_output_tokens' in kwargs:
-      config['max_output_tokens'] = kwargs['max_output_tokens']
-    if 'top_p' in kwargs:
-      config['top_p'] = kwargs['top_p']
+    merged_kwargs = self.merge_kwargs(kwargs)
+
+    config = {}
+
+    # Only add temperature if it's not None
+    temp = merged_kwargs.get('temperature', self.temperature)
+    if temp is not None:
+      config['temperature'] = temp
+    if 'max_output_tokens' in merged_kwargs:
+      config['max_output_tokens'] = merged_kwargs['max_output_tokens']
+    if 'top_p' in merged_kwargs:
+      config['top_p'] = merged_kwargs['top_p']
+
+    # Forward OpenAI-specific parameters
+    for key in [
+        'frequency_penalty',
+        'presence_penalty',
+        'seed',
+        'stop',
+        'logprobs',
+        'top_logprobs',
+    ]:
+      if key in merged_kwargs:
+        config[key] = merged_kwargs[key]
 
     # Use parallel processing for batches larger than 1
     if len(batch_prompts) > 1 and self.max_workers > 1:
@@ -176,7 +224,7 @@ class OpenAILanguageModel(inference.BaseLanguageModel):
             for i, prompt in enumerate(batch_prompts)
         }
 
-        results: list[inference.ScoredOutput | None] = [None] * len(
+        results: list[core_types.ScoredOutput | None] = [None] * len(
             batch_prompts
         )
         for future in concurrent.futures.as_completed(future_to_index):
@@ -198,4 +246,4 @@ class OpenAILanguageModel(inference.BaseLanguageModel):
       # Sequential processing for single prompt or worker
       for prompt in batch_prompts:
         result = self._process_single_prompt(prompt, config.copy())
-        yield [result]
+        yield [result]  # pylint: disable=duplicate-code

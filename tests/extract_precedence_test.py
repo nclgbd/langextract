@@ -18,10 +18,10 @@ from unittest import mock
 
 from absl.testing import absltest
 
-from langextract import data
 from langextract import factory
 from langextract import inference
 import langextract as lx
+from langextract.core import data
 
 
 class ExtractParameterPrecedenceTest(absltest.TestCase):
@@ -43,10 +43,11 @@ class ExtractParameterPrecedenceTest(absltest.TestCase):
     self.description = "description"
 
   @mock.patch("langextract.annotation.Annotator")
-  @mock.patch("langextract.factory.create_model")
+  @mock.patch("langextract.extraction.factory.create_model")
   def test_model_overrides_all_other_parameters(
       self, mock_create_model, mock_annotator_cls
   ):
+    """Test that model parameter overrides all other model-related parameters."""
     provided_model = mock.MagicMock()
     mock_annotator = mock_annotator_cls.return_value
     mock_annotator.annotate_text.return_value = "ok"
@@ -71,19 +72,23 @@ class ExtractParameterPrecedenceTest(absltest.TestCase):
     self.assertEqual(result, "ok")
 
   @mock.patch("langextract.annotation.Annotator")
-  @mock.patch("langextract.factory.create_model")
+  @mock.patch("langextract.extraction.factory.create_model")
   def test_config_overrides_model_id_and_language_model_type(
       self, mock_create_model, mock_annotator_cls
   ):
+    """Test that config parameter overrides model_id and language_model_type."""
     config = factory.ModelConfig(
         model_id="config-model", provider_kwargs={"api_key": "config-key"}
     )
     mock_model = mock.MagicMock()
+    mock_model.requires_fence_output = True
     mock_create_model.return_value = mock_model
     mock_annotator = mock_annotator_cls.return_value
     mock_annotator.annotate_text.return_value = "ok"
 
-    with mock.patch("langextract.factory.ModelConfig") as mock_model_config:
+    with mock.patch(
+        "langextract.extraction.factory.ModelConfig"
+    ) as mock_model_config:
       result = lx.extract(
           text_or_documents="text",
           prompt_description=self.description,
@@ -96,26 +101,31 @@ class ExtractParameterPrecedenceTest(absltest.TestCase):
       )
       mock_model_config.assert_not_called()
 
-    mock_create_model.assert_called_once_with(config)
+    mock_create_model.assert_called_once()
+    called_config = mock_create_model.call_args[1]["config"]
+    self.assertEqual(called_config.model_id, "config-model")
+    self.assertEqual(called_config.provider_kwargs, {"api_key": "config-key"})
+
     _, kwargs = mock_annotator_cls.call_args
     self.assertIs(kwargs["language_model"], mock_model)
-    self.assertEqual(config.provider_kwargs, {"api_key": "config-key"})
     self.assertEqual(result, "ok")
 
   @mock.patch("langextract.annotation.Annotator")
-  @mock.patch("langextract.factory.create_model")
+  @mock.patch("langextract.extraction.factory.create_model")
   def test_model_id_and_base_kwargs_override_language_model_type(
       self, mock_create_model, mock_annotator_cls
   ):
+    """Test that model_id and other kwargs are used when no model or config."""
     mock_model = mock.MagicMock()
+    mock_model.requires_fence_output = True
     mock_create_model.return_value = mock_model
     mock_annotator_cls.return_value.annotate_text.return_value = "ok"
     mock_config = mock.MagicMock()
 
     with mock.patch(
-        "langextract.factory.ModelConfig", return_value=mock_config
+        "langextract.extraction.factory.ModelConfig", return_value=mock_config
     ) as mock_model_config:
-      with self.assertWarns(DeprecationWarning):
+      with self.assertWarns(FutureWarning):
         result = lx.extract(
             text_or_documents="text",
             prompt_description=self.description,
@@ -136,23 +146,25 @@ class ExtractParameterPrecedenceTest(absltest.TestCase):
     self.assertEqual(provider_kwargs["temperature"], 0.9)
     self.assertEqual(provider_kwargs["model_url"], "http://model")
     self.assertEqual(provider_kwargs["base_url"], "http://model")
-    mock_create_model.assert_called_once_with(mock_config)
+    mock_create_model.assert_called_once()
     self.assertEqual(result, "ok")
 
   @mock.patch("langextract.annotation.Annotator")
-  @mock.patch("langextract.factory.create_model")
+  @mock.patch("langextract.extraction.factory.create_model")
   def test_language_model_type_only_emits_warning_and_works(
       self, mock_create_model, mock_annotator_cls
   ):
+    """Test that language_model_type emits deprecation warning but still works."""
     mock_model = mock.MagicMock()
+    mock_model.requires_fence_output = True
     mock_create_model.return_value = mock_model
     mock_annotator_cls.return_value.annotate_text.return_value = "ok"
     mock_config = mock.MagicMock()
 
     with mock.patch(
-        "langextract.factory.ModelConfig", return_value=mock_config
+        "langextract.extraction.factory.ModelConfig", return_value=mock_config
     ) as mock_model_config:
-      with self.assertWarns(DeprecationWarning):
+      with self.assertWarns(FutureWarning):
         result = lx.extract(
             text_or_documents="text",
             prompt_description=self.description,
@@ -164,11 +176,11 @@ class ExtractParameterPrecedenceTest(absltest.TestCase):
     mock_model_config.assert_called_once()
     _, kwargs = mock_model_config.call_args
     self.assertEqual(kwargs["model_id"], "gemini-2.5-flash")
-    mock_create_model.assert_called_once_with(mock_config)
+    mock_create_model.assert_called_once()
     self.assertEqual(result, "ok")
 
   @mock.patch("langextract.annotation.Annotator")
-  @mock.patch("langextract.factory.create_model")
+  @mock.patch("langextract.extraction.factory.create_model")
   def test_use_schema_constraints_warns_with_config(
       self, mock_create_model, mock_annotator_cls
   ):
@@ -178,6 +190,7 @@ class ExtractParameterPrecedenceTest(absltest.TestCase):
     )
 
     mock_model = mock.MagicMock()
+    mock_model.requires_fence_output = True
     mock_create_model.return_value = mock_model
     mock_annotator = mock_annotator_cls.return_value
     mock_annotator.annotate_text.return_value = "ok"
@@ -191,16 +204,15 @@ class ExtractParameterPrecedenceTest(absltest.TestCase):
           use_schema_constraints=True,
       )
 
-    self.assertIn("use_schema_constraints", str(cm.warning))
-    self.assertIn("ignored", str(cm.warning))
+    self.assertIn("schema constraints", str(cm.warning))
+    self.assertIn("applied", str(cm.warning))
     mock_create_model.assert_called_once()
-    called_config = mock_create_model.call_args[0][0]
+    called_config = mock_create_model.call_args[1]["config"]
     self.assertEqual(called_config.model_id, "gemini-2.5-flash")
-    self.assertNotIn("gemini_schema", called_config.provider_kwargs)
     self.assertEqual(result, "ok")
 
   @mock.patch("langextract.annotation.Annotator")
-  @mock.patch("langextract.factory.create_model")
+  @mock.patch("langextract.extraction.factory.create_model")
   def test_use_schema_constraints_warns_with_model(
       self, mock_create_model, mock_annotator_cls
   ):

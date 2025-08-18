@@ -12,13 +12,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Tests for the provider registry module."""
+"""Tests for the provider registry module.
+
+Note: This file tests the deprecated registry module which is now an alias
+for router. The no-name-in-module warning for providers.registry is expected.
+Test helper classes also intentionally have few public methods.
+"""
+# pylint: disable=no-name-in-module
 
 import re
 from unittest import mock
 
 from absl.testing import absltest
 
+from langextract import exceptions
 from langextract import inference
 from langextract.providers import registry
 
@@ -94,7 +101,8 @@ class RegistryTest(absltest.TestCase):
   def test_no_provider_registered(self):
     """Test error when no provider matches."""
     with self.assertRaisesRegex(
-        ValueError, "No provider registered for model_id='unknown-model'"
+        exceptions.InferenceConfigError,
+        "No provider registered for model_id='unknown-model'",
     ):
       registry.resolve("unknown-model")
 
@@ -121,7 +129,7 @@ class RegistryTest(absltest.TestCase):
     registry.clear()
 
     # Should fail after clear
-    with self.assertRaises(ValueError):
+    with self.assertRaises(exceptions.InferenceConfigError):
       registry.resolve("temp-model")
 
   def test_list_entries(self):
@@ -134,12 +142,10 @@ class RegistryTest(absltest.TestCase):
     entries = registry.list_entries()
     self.assertEqual(len(entries), 2)
 
-    # Check first entry
     patterns1, priority1 = entries[0]
     self.assertEqual(patterns1, ["^test1"])
     self.assertEqual(priority1, 5)
 
-    # Check second entry
     patterns2, priority2 = entries[1]
     self.assertEqual(set(patterns2), {"^test2", "^test3"})
     self.assertEqual(priority2, 10)
@@ -168,7 +174,7 @@ class RegistryTest(absltest.TestCase):
     self.assertEqual(registry.resolve("custom-123"), CustomProvider)
 
     # Should not match without digits
-    with self.assertRaises(ValueError):
+    with self.assertRaises(exceptions.InferenceConfigError):
       registry.resolve("custom-abc")
 
   def test_resolve_provider_by_name(self):
@@ -188,9 +194,45 @@ class RegistryTest(absltest.TestCase):
 
   def test_resolve_provider_not_found(self):
     """Test resolve_provider raises for unknown provider."""
-    with self.assertRaises(ValueError) as cm:
+    with self.assertRaises(exceptions.InferenceConfigError) as cm:
       registry.resolve_provider("UnknownProvider")
     self.assertIn("No provider found matching", str(cm.exception))
+
+  def test_hf_style_model_id_patterns(self):
+    """Test that Hugging Face style model ID patterns work.
+
+    This addresses issue #129 where HF-style model IDs like
+    'meta-llama/Llama-3.2-1B-Instruct' weren't being recognized.
+    """
+
+    @registry.register(
+        r"^meta-llama/[Ll]lama",
+        r"^google/gemma",
+        r"^mistralai/[Mm]istral",
+        r"^microsoft/phi",
+        r"^Qwen/",
+        r"^TinyLlama/",
+        priority=100,
+    )
+    class TestHFProvider(inference.BaseLanguageModel):  # pylint: disable=too-few-public-methods
+
+      def infer(self, batch_prompts, **kwargs):
+        return []
+
+    hf_model_ids = [
+        "meta-llama/Llama-3.2-1B-Instruct",
+        "meta-llama/llama-2-7b",
+        "google/gemma-2b",
+        "mistralai/Mistral-7B-v0.1",
+        "microsoft/phi-3-mini",
+        "Qwen/Qwen2.5-7B",
+        "TinyLlama/TinyLlama-1.1B-Chat-v1.0",
+    ]
+
+    for model_id in hf_model_ids:
+      with self.subTest(model_id=model_id):
+        provider_class = registry.resolve(model_id)
+        self.assertEqual(provider_class, TestHFProvider)
 
 
 if __name__ == "__main__":

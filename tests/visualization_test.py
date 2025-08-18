@@ -18,8 +18,8 @@ from unittest import mock
 
 from absl.testing import absltest
 
-from langextract import data as lx_data
 from langextract import visualization
+from langextract.core import data as lx_data
 
 _PALETTE = visualization._PALETTE
 _VISUALIZATION_CSS = visualization._VISUALIZATION_CSS
@@ -125,7 +125,6 @@ class VisualizationTest(absltest.TestCase):
         f'style="background-color:{med_color};">MEDICATION</span></div>'
     )
     css_html = _VISUALIZATION_CSS
-    # Build expected components (adapted for animation format)
     expected_components = [
         css_html,
         "lx-animated-wrapper",

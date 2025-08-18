@@ -12,7 +12,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Tests for the factory module."""
+"""Tests for the factory module.
+
+Note: This file tests the deprecated registry module which is now an alias
+for router. The no-name-in-module warning for providers.registry is expected.
+"""
+# pylint: disable=no-name-in-module
 
 import os
 from unittest import mock
@@ -162,10 +167,10 @@ class FactoryTest(absltest.TestCase):
     self.assertIn("API key required", str(cm.exception))
 
   def test_raises_error_when_no_provider_matches_model_id(self):
-    """Factory should raise ValueError for unregistered model IDs."""
+    """Factory should raise InferenceConfigError for unregistered model IDs."""
     config = factory.ModelConfig(model_id="unknown-model")
 
-    with self.assertRaises(ValueError) as cm:
+    with self.assertRaises(exceptions.InferenceConfigError) as cm:
       factory.create_model(config)
 
     self.assertIn("No provider registered", str(cm.exception))
