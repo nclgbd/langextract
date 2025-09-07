@@ -66,7 +66,11 @@ _LAZY_MODULES = {
     "chunking": "langextract.chunking",
     "data": "langextract.data",
     "data_lib": "langextract.data_lib",
+<<<<<<< HEAD
     "debug_utils": "langextract.debug_utils",
+=======
+    "debug_utils": "langextract.core.debug_utils",
+>>>>>>> origin
     "exceptions": "langextract.exceptions",
     "factory": "langextract.factory",
     "inference": "langextract.inference",

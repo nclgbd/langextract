@@ -16,7 +16,10 @@
 import socket
 
 import pytest
+<<<<<<< HEAD
 import requests
+=======
+>>>>>>> origin
 
 import langextract as lx
 

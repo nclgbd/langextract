@@ -19,19 +19,31 @@ from unittest import mock
 
 from absl.testing import absltest
 
+<<<<<<< HEAD
 from langextract import inference
 from langextract import prompting
 from langextract import schema
 import langextract as lx
 from langextract.core import data
 from langextract.providers.schemas import gemini as gemini_schemas
+=======
+from langextract import prompting
+import langextract as lx
+from langextract.core import data
+from langextract.core import types
+from langextract.providers import schemas
+>>>>>>> origin
 
 
 class InitTest(absltest.TestCase):
   """Test cases for the main package functions."""
 
   @mock.patch.object(
+<<<<<<< HEAD
       gemini_schemas.GeminiSchema, "from_examples", autospec=True
+=======
+      schemas.gemini.GeminiSchema, "from_examples", autospec=True
+>>>>>>> origin
   )
   @mock.patch("langextract.extraction.factory.create_model")
   def test_lang_extract_as_lx_extract(
@@ -42,7 +54,11 @@ class InitTest(absltest.TestCase):
 
     mock_model = mock.MagicMock()
     mock_model.infer.return_value = [[
+<<<<<<< HEAD
         inference.ScoredOutput(
+=======
+        types.ScoredOutput(
+>>>>>>> origin
             output=textwrap.dedent("""\
             ```json
             {
@@ -145,7 +161,11 @@ class InitTest(absltest.TestCase):
     self.assertDataclassEqual(expected_result, actual_result)
 
   @mock.patch.object(
+<<<<<<< HEAD
       gemini_schemas.GeminiSchema, "from_examples", autospec=True
+=======
+      schemas.gemini.GeminiSchema, "from_examples", autospec=True
+>>>>>>> origin
   )
   @mock.patch("langextract.extraction.factory.create_model")
   def test_extract_custom_params_reach_inference(
@@ -156,7 +176,11 @@ class InitTest(absltest.TestCase):
 
     mock_model = mock.MagicMock()
     mock_model.infer.return_value = [[
+<<<<<<< HEAD
         inference.ScoredOutput(
+=======
+        types.ScoredOutput(
+>>>>>>> origin
             output='```json\n{"extractions": []}\n```',
             score=0.9,
         )
@@ -192,6 +216,51 @@ class InitTest(absltest.TestCase):
     _, kwargs = mock_model.infer.call_args
     self.assertEqual(kwargs.get("max_workers"), 5)
 
+<<<<<<< HEAD
+=======
+  def test_data_module_exports_via_compatibility_shim(self):
+    """Verify data module exports are accessible via lx.data."""
+    expected_exports = [
+        "AlignmentStatus",
+        "CharInterval",
+        "Extraction",
+        "Document",
+        "AnnotatedDocument",
+        "ExampleData",
+        "FormatType",
+    ]
+
+    for name in expected_exports:
+      with self.subTest(export=name):
+        self.assertTrue(
+            hasattr(lx.data, name),
+            f"lx.data.{name} not accessible via compatibility shim",
+        )
+
+  def test_tokenizer_module_exports_via_compatibility_shim(self):
+    """Verify tokenizer module exports are accessible via lx.tokenizer."""
+    expected_exports = [
+        "BaseTokenizerError",
+        "InvalidTokenIntervalError",
+        "SentenceRangeError",
+        "CharInterval",
+        "TokenInterval",
+        "TokenType",
+        "Token",
+        "TokenizedText",
+        "tokenize",
+        "tokens_text",
+        "find_sentence_range",
+    ]
+
+    for name in expected_exports:
+      with self.subTest(export=name):
+        self.assertTrue(
+            hasattr(lx.tokenizer, name),
+            f"lx.tokenizer.{name} not accessible via compatibility shim",
+        )
+
+>>>>>>> origin
 
 if __name__ == "__main__":
   absltest.main()

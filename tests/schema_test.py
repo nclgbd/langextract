@@ -18,17 +18,27 @@ Note: This file contains test helper classes that intentionally have
 few public methods. The too-few-public-methods warnings are expected.
 """
 
+<<<<<<< HEAD
 import string
 import textwrap
+=======
+>>>>>>> origin
 from unittest import mock
 
 from absl.testing import absltest
 from absl.testing import parameterized
 
+<<<<<<< HEAD
 from langextract import inference
 from langextract import schema
 from langextract.core import data
 from langextract.providers.schemas import gemini as gemini_schemas
+=======
+from langextract import schema
+from langextract.core import base_model
+from langextract.core import data
+from langextract.providers import schemas
+>>>>>>> origin
 
 
 class BaseSchemaTest(absltest.TestCase):
@@ -60,7 +70,11 @@ class BaseLanguageModelSchemaTest(absltest.TestCase):
   def test_get_schema_class_returns_none_by_default(self):
     """Test that get_schema_class returns None by default."""
 
+<<<<<<< HEAD
     class TestModel(inference.BaseLanguageModel):  # pylint: disable=too-few-public-methods
+=======
+    class TestModel(base_model.BaseLanguageModel):  # pylint: disable=too-few-public-methods
+>>>>>>> origin
 
       def infer(self, batch_prompts, **kwargs):
         yield []
@@ -70,7 +84,11 @@ class BaseLanguageModelSchemaTest(absltest.TestCase):
   def test_apply_schema_stores_instance(self):
     """Test that apply_schema stores the schema instance."""
 
+<<<<<<< HEAD
     class TestModel(inference.BaseLanguageModel):  # pylint: disable=too-few-public-methods
+=======
+    class TestModel(base_model.BaseLanguageModel):  # pylint: disable=too-few-public-methods
+>>>>>>> origin
 
       def infer(self, batch_prompts, **kwargs):
         yield []
@@ -239,7 +257,11 @@ class GeminiSchemaTest(parameterized.TestCase):
   def test_from_examples_constructs_expected_schema(
       self, examples_data, expected_schema
   ):
+<<<<<<< HEAD
     gemini_schema = gemini_schemas.GeminiSchema.from_examples(examples_data)
+=======
+    gemini_schema = schemas.gemini.GeminiSchema.from_examples(examples_data)
+>>>>>>> origin
     actual_schema = gemini_schema.schema_dict
     self.assertEqual(actual_schema, expected_schema)
 
@@ -257,7 +279,11 @@ class GeminiSchemaTest(parameterized.TestCase):
         )
     ]
 
+<<<<<<< HEAD
     gemini_schema = gemini_schemas.GeminiSchema.from_examples(examples_data)
+=======
+    gemini_schema = schemas.gemini.GeminiSchema.from_examples(examples_data)
+>>>>>>> origin
     provider_config = gemini_schema.to_provider_config()
 
     # Should contain response_schema key
@@ -280,7 +306,11 @@ class GeminiSchemaTest(parameterized.TestCase):
         )
     ]
 
+<<<<<<< HEAD
     gemini_schema = gemini_schemas.GeminiSchema.from_examples(examples_data)
+=======
+    gemini_schema = schemas.gemini.GeminiSchema.from_examples(examples_data)
+>>>>>>> origin
     self.assertTrue(gemini_schema.supports_strict_mode)
 
 

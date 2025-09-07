@@ -34,7 +34,10 @@ disable=
     bad-indentation,          # pyink 2-space style conflicts with pylint
     unused-argument,          # Mock callbacks often have unused args
     import-error,             # Test dependencies may not be installed
+<<<<<<< HEAD
     unused-import,            # Some imports are for test fixtures
+=======
+>>>>>>> origin
     too-many-positional-arguments  # Test methods can have many args
 
 [DESIGN]

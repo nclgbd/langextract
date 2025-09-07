@@ -28,7 +28,11 @@ from langextract.core import schema
 from langextract.core import types as core_types
 from langextract.providers import patterns
 from langextract.providers import router
+<<<<<<< HEAD
 from langextract.providers.schemas import gemini as gemini_schemas
+=======
+from langextract.providers import schemas
+>>>>>>> origin
 
 _API_CONFIG_KEYS: Final[set[str]] = {
     'response_mime_type',
@@ -51,7 +55,11 @@ class GeminiLanguageModel(base_model.BaseLanguageModel):
 
   model_id: str = 'gemini-2.5-flash'
   api_key: str | None = None
+<<<<<<< HEAD
   gemini_schema: gemini_schemas.GeminiSchema | None = None
+=======
+  gemini_schema: schemas.gemini.GeminiSchema | None = None
+>>>>>>> origin
   format_type: data.FormatType = data.FormatType.JSON
   temperature: float = 0.0
   max_workers: int = 10
@@ -67,7 +75,11 @@ class GeminiLanguageModel(base_model.BaseLanguageModel):
     Returns:
       The GeminiSchema class that supports strict schema constraints.
     """
+<<<<<<< HEAD
     return gemini_schemas.GeminiSchema
+=======
+    return schemas.gemini.GeminiSchema
+>>>>>>> origin
 
   def apply_schema(self, schema_instance: schema.BaseSchema | None) -> None:
     """Apply a schema instance to this provider.
@@ -77,14 +89,22 @@ class GeminiLanguageModel(base_model.BaseLanguageModel):
     """
     super().apply_schema(schema_instance)
     # Keep provider behavior consistent with legacy path
+<<<<<<< HEAD
     if isinstance(schema_instance, gemini_schemas.GeminiSchema):
+=======
+    if isinstance(schema_instance, schemas.gemini.GeminiSchema):
+>>>>>>> origin
       self.gemini_schema = schema_instance
 
   def __init__(
       self,
       model_id: str = 'gemini-2.5-flash',
       api_key: str | None = None,
+<<<<<<< HEAD
       gemini_schema: gemini_schemas.GeminiSchema | None = None,
+=======
+      gemini_schema: schemas.gemini.GeminiSchema | None = None,
+>>>>>>> origin
       format_type: data.FormatType = data.FormatType.JSON,
       temperature: float = 0.0,
       max_workers: int = 10,

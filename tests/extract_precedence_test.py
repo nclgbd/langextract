@@ -19,9 +19,15 @@ from unittest import mock
 from absl.testing import absltest
 
 from langextract import factory
+<<<<<<< HEAD
 from langextract import inference
 import langextract as lx
 from langextract.core import data
+=======
+import langextract as lx
+from langextract.core import data
+from langextract.providers import openai
+>>>>>>> origin
 
 
 class ExtractParameterPrecedenceTest(absltest.TestCase):
@@ -62,7 +68,11 @@ class ExtractParameterPrecedenceTest(absltest.TestCase):
         config=config,
         model_id="ignored-model",
         api_key="ignored-key",
+<<<<<<< HEAD
         language_model_type=inference.OpenAILanguageModel,
+=======
+        language_model_type=openai.OpenAILanguageModel,
+>>>>>>> origin
         use_schema_constraints=False,
     )
 
@@ -96,7 +106,11 @@ class ExtractParameterPrecedenceTest(absltest.TestCase):
           config=config,
           model_id="other-model",
           api_key="other-key",
+<<<<<<< HEAD
           language_model_type=inference.OpenAILanguageModel,
+=======
+          language_model_type=openai.OpenAILanguageModel,
+>>>>>>> origin
           use_schema_constraints=False,
       )
       mock_model_config.assert_not_called()
@@ -134,7 +148,11 @@ class ExtractParameterPrecedenceTest(absltest.TestCase):
             api_key="api-key",
             temperature=0.9,
             model_url="http://model",
+<<<<<<< HEAD
             language_model_type=inference.OpenAILanguageModel,
+=======
+            language_model_type=openai.OpenAILanguageModel,
+>>>>>>> origin
             use_schema_constraints=False,
         )
 
@@ -169,7 +187,11 @@ class ExtractParameterPrecedenceTest(absltest.TestCase):
             text_or_documents="text",
             prompt_description=self.description,
             examples=self.examples,
+<<<<<<< HEAD
             language_model_type=inference.OpenAILanguageModel,
+=======
+            language_model_type=openai.OpenAILanguageModel,
+>>>>>>> origin
             use_schema_constraints=False,
         )
 

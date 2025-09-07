@@ -26,11 +26,20 @@ from absl.testing import absltest
 
 from langextract import exceptions
 from langextract import factory
+<<<<<<< HEAD
 from langextract import inference
 from langextract.providers import registry
 
 
 class FakeGeminiProvider(inference.BaseLanguageModel):
+=======
+from langextract.core import base_model
+from langextract.core import types
+from langextract.providers import router
+
+
+class FakeGeminiProvider(base_model.BaseLanguageModel):
+>>>>>>> origin
   """Fake Gemini provider for testing."""
 
   def __init__(self, model_id, api_key=None, **kwargs):
@@ -40,13 +49,21 @@ class FakeGeminiProvider(inference.BaseLanguageModel):
     super().__init__()
 
   def infer(self, batch_prompts, **kwargs):
+<<<<<<< HEAD
     return [[inference.ScoredOutput(score=1.0, output="gemini")]]
+=======
+    return [[types.ScoredOutput(score=1.0, output="gemini")]]
+>>>>>>> origin
 
   def infer_batch(self, prompts, batch_size=32):
     return self.infer(prompts)
 
 
+<<<<<<< HEAD
 class FakeOpenAIProvider(inference.BaseLanguageModel):
+=======
+class FakeOpenAIProvider(base_model.BaseLanguageModel):
+>>>>>>> origin
   """Fake OpenAI provider for testing."""
 
   def __init__(self, model_id, api_key=None, **kwargs):
@@ -58,7 +75,11 @@ class FakeOpenAIProvider(inference.BaseLanguageModel):
     super().__init__()
 
   def infer(self, batch_prompts, **kwargs):
+<<<<<<< HEAD
     return [[inference.ScoredOutput(score=1.0, output="openai")]]
+=======
+    return [[types.ScoredOutput(score=1.0, output="openai")]]
+>>>>>>> origin
 
   def infer_batch(self, prompts, batch_size=32):
     return self.infer(prompts)
@@ -68,6 +89,7 @@ class FactoryTest(absltest.TestCase):
 
   def setUp(self):
     super().setUp()
+<<<<<<< HEAD
     registry.clear()
     import langextract.providers as providers_module  # pylint: disable=import-outside-toplevel
 
@@ -82,6 +104,19 @@ class FactoryTest(absltest.TestCase):
   def tearDown(self):
     super().tearDown()
     registry.clear()
+=======
+    router.clear()
+    import langextract.providers as providers_module  # pylint: disable=import-outside-toplevel
+
+    providers_module._PLUGINS_LOADED = True
+    # Use direct registration for test providers to avoid module path issues
+    router.register(r"^gemini", priority=100)(FakeGeminiProvider)
+    router.register(r"^gpt", r"^o1", priority=100)(FakeOpenAIProvider)
+
+  def tearDown(self):
+    super().tearDown()
+    router.clear()
+>>>>>>> origin
     import langextract.providers as providers_module  # pylint: disable=import-outside-toplevel
 
     providers_module._PLUGINS_LOADED = False
@@ -196,8 +231,13 @@ class FactoryTest(absltest.TestCase):
   def test_ollama_uses_base_url_from_environment(self):
     """Factory should use OLLAMA_BASE_URL from environment for Ollama models."""
 
+<<<<<<< HEAD
     @registry.register(r"^ollama")
     class FakeOllamaProvider(inference.BaseLanguageModel):  # pylint: disable=unused-variable
+=======
+    @router.register(r"^ollama")
+    class FakeOllamaProvider(base_model.BaseLanguageModel):  # pylint: disable=unused-variable
+>>>>>>> origin
 
       def __init__(self, model_id, base_url=None, **kwargs):
         self.model_id = model_id
@@ -205,7 +245,11 @@ class FactoryTest(absltest.TestCase):
         super().__init__()
 
       def infer(self, batch_prompts, **kwargs):
+<<<<<<< HEAD
         return [[inference.ScoredOutput(score=1.0, output="ollama")]]
+=======
+        return [[types.ScoredOutput(score=1.0, output="ollama")]]
+>>>>>>> origin
 
       def infer_batch(self, prompts, batch_size=32):
         return self.infer(prompts)
@@ -218,17 +262,26 @@ class FactoryTest(absltest.TestCase):
   def test_ollama_models_select_without_api_keys(self):
     """Test that Ollama models resolve without API keys or explicit type."""
 
+<<<<<<< HEAD
     @registry.register(
         r"^llama", r"^gemma", r"^mistral", r"^qwen", priority=100
     )
     class FakeOllamaProvider(inference.BaseLanguageModel):
+=======
+    @router.register(r"^llama", r"^gemma", r"^mistral", r"^qwen", priority=100)
+    class FakeOllamaProvider(base_model.BaseLanguageModel):
+>>>>>>> origin
 
       def __init__(self, model_id, **kwargs):
         self.model_id = model_id
         super().__init__()
 
       def infer(self, batch_prompts, **kwargs):
+<<<<<<< HEAD
         return [[inference.ScoredOutput(score=1.0, output="test")]]
+=======
+        return [[types.ScoredOutput(score=1.0, output="test")]]
+>>>>>>> origin
 
       def infer_batch(self, prompts, batch_size=32):
         return self.infer(prompts)
@@ -265,8 +318,13 @@ class FactoryTest(absltest.TestCase):
   def test_uses_highest_priority_provider_when_multiple_match(self):
     """Factory uses highest priority provider when multiple patterns match."""
 
+<<<<<<< HEAD
     @registry.register(r"^gemini", priority=90)
     class AnotherGeminiProvider(inference.BaseLanguageModel):  # pylint: disable=unused-variable
+=======
+    @router.register(r"^gemini", priority=90)
+    class AnotherGeminiProvider(base_model.BaseLanguageModel):  # pylint: disable=unused-variable
+>>>>>>> origin
 
       def __init__(self, model_id=None, **kwargs):
         self.model_id = model_id or "default-model"
@@ -274,7 +332,11 @@ class FactoryTest(absltest.TestCase):
         super().__init__()
 
       def infer(self, batch_prompts, **kwargs):
+<<<<<<< HEAD
         return [[inference.ScoredOutput(score=1.0, output="another")]]
+=======
+        return [[types.ScoredOutput(score=1.0, output="another")]]
+>>>>>>> origin
 
       def infer_batch(self, prompts, batch_size=32):
         return self.infer(prompts)
@@ -287,8 +349,13 @@ class FactoryTest(absltest.TestCase):
   def test_explicit_provider_overrides_pattern_matching(self):
     """Factory should use explicit provider even when pattern doesn't match."""
 
+<<<<<<< HEAD
     @registry.register(r"^another", priority=90)
     class AnotherProvider(inference.BaseLanguageModel):
+=======
+    @router.register(r"^another", priority=90)
+    class AnotherProvider(base_model.BaseLanguageModel):
+>>>>>>> origin
 
       def __init__(self, model_id=None, **kwargs):
         self.model_id = model_id or "default-model"
@@ -296,7 +363,11 @@ class FactoryTest(absltest.TestCase):
         super().__init__()
 
       def infer(self, batch_prompts, **kwargs):
+<<<<<<< HEAD
         return [[inference.ScoredOutput(score=1.0, output="another")]]
+=======
+        return [[types.ScoredOutput(score=1.0, output="another")]]
+>>>>>>> origin
 
       def infer_batch(self, prompts, batch_size=32):
         return self.infer(prompts)
@@ -312,8 +383,13 @@ class FactoryTest(absltest.TestCase):
   def test_provider_without_model_id_uses_provider_default(self):
     """Factory should use provider's default model_id when none specified."""
 
+<<<<<<< HEAD
     @registry.register(r"^default-provider$", priority=50)
     class DefaultProvider(inference.BaseLanguageModel):
+=======
+    @router.register(r"^default-provider$", priority=50)
+    class DefaultProvider(base_model.BaseLanguageModel):
+>>>>>>> origin
 
       def __init__(self, model_id="default-model", **kwargs):
         self.model_id = model_id
@@ -321,7 +397,11 @@ class FactoryTest(absltest.TestCase):
         super().__init__()
 
       def infer(self, batch_prompts, **kwargs):
+<<<<<<< HEAD
         return [[inference.ScoredOutput(score=1.0, output="default")]]
+=======
+        return [[types.ScoredOutput(score=1.0, output="default")]]
+>>>>>>> origin
 
       def infer_batch(self, prompts, batch_size=32):
         return self.infer(prompts)

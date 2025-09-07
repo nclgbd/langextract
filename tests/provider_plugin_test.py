@@ -25,7 +25,11 @@ import subprocess
 import sys
 import tempfile
 import textwrap
+<<<<<<< HEAD
 import types
+=======
+import types as builtin_types
+>>>>>>> origin
 from unittest import mock
 import uuid
 
@@ -33,6 +37,11 @@ from absl.testing import absltest
 import pytest
 
 import langextract as lx
+<<<<<<< HEAD
+=======
+from langextract.core import base_model
+from langextract.core import types
+>>>>>>> origin
 
 
 def _create_mock_entry_points(entry_points_list):
@@ -77,18 +86,30 @@ class PluginSmokeTest(absltest.TestCase):
 
     def _ep_load():
       @lx.providers.registry.register(r"^plugin-model")
+<<<<<<< HEAD
       class PluginProvider(lx.inference.BaseLanguageModel):  # pylint: disable=too-few-public-methods
+=======
+      class PluginProvider(base_model.BaseLanguageModel):  # pylint: disable=too-few-public-methods
+>>>>>>> origin
 
         def __init__(self, model_id=None, **kwargs):
           super().__init__()
           self.model_id = model_id
 
         def infer(self, batch_prompts, **kwargs):
+<<<<<<< HEAD
           return [[lx.inference.ScoredOutput(score=1.0, output="ok")]]
 
       return PluginProvider
 
     ep = types.SimpleNamespace(
+=======
+          return [[types.ScoredOutput(score=1.0, output="ok")]]
+
+      return PluginProvider
+
+    ep = builtin_types.SimpleNamespace(
+>>>>>>> origin
         name="plugin_provider",
         group="langextract.providers",
         value="my_pkg:PluginProvider",
@@ -127,7 +148,11 @@ class PluginSmokeTest(absltest.TestCase):
     def _bad_load():
       raise ImportError("Plugin not found")
 
+<<<<<<< HEAD
     bad_ep = types.SimpleNamespace(
+=======
+    bad_ep = builtin_types.SimpleNamespace(
+>>>>>>> origin
         name="bad_plugin",
         group="langextract.providers",
         value="bad_pkg:BadProvider",
@@ -159,6 +184,7 @@ class PluginSmokeTest(absltest.TestCase):
 
     def _ep_load():
       @lx.providers.registry.register(r"^plugin-model")
+<<<<<<< HEAD
       class Plugin(lx.inference.BaseLanguageModel):  # pylint: disable=too-few-public-methods
 
         def infer(self, *a, **k):
@@ -167,6 +193,16 @@ class PluginSmokeTest(absltest.TestCase):
       return Plugin
 
     ep = types.SimpleNamespace(
+=======
+      class Plugin(base_model.BaseLanguageModel):  # pylint: disable=too-few-public-methods
+
+        def infer(self, *a, **k):
+          return [[types.ScoredOutput(score=1.0, output="ok")]]
+
+      return Plugin
+
+    ep = builtin_types.SimpleNamespace(
+>>>>>>> origin
         name="plugin_provider",
         group="langextract.providers",
         value="pkg:Plugin",
@@ -186,7 +222,11 @@ class PluginSmokeTest(absltest.TestCase):
     class NotAProvider:  # pylint: disable=too-few-public-methods
       """Dummy class to test non-provider handling."""
 
+<<<<<<< HEAD
     bad_ep = types.SimpleNamespace(
+=======
+    bad_ep = builtin_types.SimpleNamespace(
+>>>>>>> origin
         name="bad",
         group="langextract.providers",
         value="bad:NotAProvider",
@@ -220,6 +260,7 @@ class PluginSmokeTest(absltest.TestCase):
 
     def _ep_load():
       @lx.providers.registry.register(r"^gemini", priority=50)
+<<<<<<< HEAD
       class OverrideGemini(lx.inference.BaseLanguageModel):  # pylint: disable=too-few-public-methods
 
         def infer(self, batch_prompts, **kwargs):
@@ -228,6 +269,16 @@ class PluginSmokeTest(absltest.TestCase):
       return OverrideGemini
 
     ep = types.SimpleNamespace(
+=======
+      class OverrideGemini(base_model.BaseLanguageModel):  # pylint: disable=too-few-public-methods
+
+        def infer(self, batch_prompts, **kwargs):
+          return [[types.ScoredOutput(score=1.0, output="override")]]
+
+      return OverrideGemini
+
+    ep = builtin_types.SimpleNamespace(
+>>>>>>> origin
         name="override_gemini",
         group="langextract.providers",
         value="pkg:OverrideGemini",
@@ -252,6 +303,7 @@ class PluginSmokeTest(absltest.TestCase):
 
     def _ep_load():
       @lx.providers.registry.register(r"^plugin-resolve")
+<<<<<<< HEAD
       class ResolveMePlease(lx.inference.BaseLanguageModel):  # pylint: disable=too-few-public-methods
 
         def infer(self, batch_prompts, **kwargs):
@@ -260,6 +312,16 @@ class PluginSmokeTest(absltest.TestCase):
       return ResolveMePlease
 
     ep = types.SimpleNamespace(
+=======
+      class ResolveMePlease(base_model.BaseLanguageModel):  # pylint: disable=too-few-public-methods
+
+        def infer(self, batch_prompts, **kwargs):
+          return [[types.ScoredOutput(score=1.0, output="ok")]]
+
+      return ResolveMePlease
+
+    ep = builtin_types.SimpleNamespace(
+>>>>>>> origin
         name="resolver_plugin",
         group="langextract.providers",
         value="pkg:ResolveMePlease",
@@ -299,7 +361,11 @@ class PluginSmokeTest(absltest.TestCase):
 
     def _ep_load():
       @lx.providers.registry.register(r"^custom-schema-test")
+<<<<<<< HEAD
       class SchemaTestProvider(lx.inference.BaseLanguageModel):
+=======
+      class SchemaTestProvider(base_model.BaseLanguageModel):
+>>>>>>> origin
 
         def __init__(self, model_id=None, **kwargs):
           super().__init__()
@@ -316,11 +382,19 @@ class PluginSmokeTest(absltest.TestCase):
               if self.schema_config
               else "No schema"
           )
+<<<<<<< HEAD
           return [[lx.inference.ScoredOutput(score=1.0, output=output)]]
 
       return SchemaTestProvider
 
     ep = types.SimpleNamespace(
+=======
+          return [[types.ScoredOutput(score=1.0, output=output)]]
+
+      return SchemaTestProvider
+
+    ep = builtin_types.SimpleNamespace(
+>>>>>>> origin
         name="schema_test",
         group="langextract.providers",
         value="test:SchemaTestProvider",
@@ -402,7 +476,11 @@ class PluginE2ETest(absltest.TestCase):
 
     def _ep_load():
       @lx.providers.registry.register(r"^e2e-schema-test")
+<<<<<<< HEAD
       class SchemaE2EProvider(lx.inference.BaseLanguageModel):
+=======
+      class SchemaE2EProvider(base_model.BaseLanguageModel):
+>>>>>>> origin
 
         def __init__(self, model_id=None, **kwargs):
           super().__init__()
@@ -422,11 +500,19 @@ class PluginE2ETest(absltest.TestCase):
             )
           else:
             output = '{"extractions": []}'
+<<<<<<< HEAD
           return [[lx.inference.ScoredOutput(score=1.0, output=output)]]
 
       return SchemaE2EProvider
 
     ep = types.SimpleNamespace(
+=======
+          return [[types.ScoredOutput(score=1.0, output=output)]]
+
+      return SchemaE2EProvider
+
+    ep = builtin_types.SimpleNamespace(
+>>>>>>> origin
         name="schema_e2e",
         group="langextract.providers",
         value="test:SchemaE2EProvider",
@@ -490,6 +576,25 @@ class PluginE2ETest(absltest.TestCase):
     4. Uninstalls and verifies cleanup
     """
 
+<<<<<<< HEAD
+=======
+    # Skip in Bazel environment where pip operations don't work
+    if os.environ.get("TEST_TMPDIR") or os.environ.get(
+        "BUILD_WORKING_DIRECTORY"
+    ):
+      self.skipTest("pip install tests don't work in Bazel sandbox")
+
+    # Also skip if pip is not available
+    try:
+      subprocess.run(
+          [sys.executable, "-m", "pip", "--version"],
+          capture_output=True,
+          check=True,
+      )
+    except (subprocess.CalledProcessError, FileNotFoundError):
+      self.skipTest("pip not available in test environment")
+
+>>>>>>> origin
     with tempfile.TemporaryDirectory() as tmpdir:
       pkg_name = f"test_langextract_plugin_{uuid.uuid4().hex[:8]}"
       pkg_dir = Path(tmpdir) / pkg_name
@@ -500,6 +605,11 @@ class PluginE2ETest(absltest.TestCase):
 
       (pkg_dir / pkg_name / "provider.py").write_text(textwrap.dedent("""
         import langextract as lx
+<<<<<<< HEAD
+=======
+        from langextract.core import base_model
+        from langextract.core import types
+>>>>>>> origin
 
         USED_BY_EXTRACT = False
 
@@ -521,7 +631,11 @@ class PluginE2ETest(absltest.TestCase):
                 return True
 
         @lx.providers.registry.register(r'^test-pip-model', priority=50)
+<<<<<<< HEAD
         class TestPipProvider(lx.inference.BaseLanguageModel):
+=======
+        class TestPipProvider(base_model.BaseLanguageModel):
+>>>>>>> origin
             def __init__(self, model_id, **kwargs):
                 super().__init__()
                 self.model_id = model_id
@@ -535,7 +649,11 @@ class PluginE2ETest(absltest.TestCase):
                 global USED_BY_EXTRACT
                 USED_BY_EXTRACT = True
                 schema_info = "with_schema" if self.schema_config else "no_schema"
+<<<<<<< HEAD
                 return [[lx.inference.ScoredOutput(score=1.0, output=f"pip test response: {schema_info}")]]
+=======
+                return [[types.ScoredOutput(score=1.0, output=f"pip test response: {schema_info}")]]
+>>>>>>> origin
       """))
 
       (pkg_dir / "pyproject.toml").write_text(textwrap.dedent(f"""
